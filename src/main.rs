@@ -1,5 +1,4 @@
-mod lib;
-use lib::*;
+mod rope_mod;
 
 use std::env;
 use std::fs;
@@ -15,7 +14,7 @@ fn text_widget(source: String) -> impl Widget<()> {
 fn main() -> Result<(), PlatformError> {
 	let args: Vec<String> = env::args().collect();
 
-	let mut rope_instance = Rope::new();
+	let mut rope_instance = rope_mod::Rope::new();
 	let leaf_length: usize = 32;
 
 	let mut file_name = &"test_document.txt".to_string();
@@ -34,7 +33,9 @@ fn main() -> Result<(), PlatformError> {
 		file_index += 2*leaf_length;
 	}
 
-	let source = rope_instance.collect_leaves();
+	rope_instance.rebuild();
+	let source = rope_instance.get_text();
+	// println!("{}", source);
 
 	AppLauncher::with_window(WindowDesc::new(text_widget(source))).launch(())?;
     Ok(())
