@@ -6,7 +6,7 @@ pub struct Leaf {
 impl Leaf {
 	pub fn new(data: String) -> Self {
 		Leaf {
-			length: data.len(),
+			length: data.chars().count(),
 			text: data,
 		}
 	}

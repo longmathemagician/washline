@@ -9,6 +9,7 @@ mod branch_mod;
 use stack_mod::*;
 use tree_mod::*;
 
+#[derive(Debug)]
 pub struct Rope {
 	head: Option<Arc<Tree>>,
 }
@@ -17,7 +18,7 @@ impl Rope {
 		Rope { head: None }
 	}
 	pub fn add_branch(&mut self, data: String) {
-		let data_len: usize = data.len();
+		let data_len: usize = data.chars().count();
 		let split_index = data_len - data_len / 2;
 
 		let left_data = data[..split_index].to_string();
@@ -95,5 +96,39 @@ impl Rope {
 			}
 		}
 		self.head = mem::replace(&mut new_head, None);
+	}
+	pub fn char_at(&self, source_index: usize) -> Option<char> {
+		let mut tree_stack: TreeDFSStack = TreeDFSStack::new();
+		if let Some(tree) = &self.head {
+			tree_stack.push(Arc::clone(tree), (false, false));
+		}
+
+		let mut char_index: usize;
+		let doc_length: usize;
+
+		if let Some(head) = &self.head {
+			doc_length = head.get_weight() - 1;
+			if source_index > doc_length { return None }
+			char_index = source_index;
+		} else { return None }
+
+		while let Some(current_tree) = tree_stack.peek_item() {
+			if let Tree::Branch(branch) = &*current_tree {
+				if char_index >= branch.get_left_weight() {
+					if let Some(right_sub_branch) = branch.get_right() {
+						char_index -= branch.get_left_weight();
+						tree_stack.push(right_sub_branch, (false, false));
+					} else { return None }
+				} else {
+					if let Some(left_sub_branch) = branch.get_left() {
+						tree_stack.push(left_sub_branch, (false, false));
+					} else { return None }
+				}
+			}
+			else if let Tree::Leaf(leaf) = &*current_tree {
+				return Some(leaf.get_text().chars().nth(char_index).unwrap());
+			}
+		}
+		None
 	}
 }
