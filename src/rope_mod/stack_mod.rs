@@ -13,10 +13,7 @@ impl<T> ArcStack<T> {
 	}
 	pub fn peek(&self) -> Option<Arc<T>> {
 		let tmp = self.head.last();
-		match tmp {
-			Some(data) => Some(Arc::clone(data)),
-			_ => None,
-		}
+		tmp.map(Arc::clone)
 	}
 	#[allow(dead_code)]
 	pub fn peek_two(&mut self) -> (Option<Arc<T>>, Option<Arc<T>>) {
@@ -41,11 +38,7 @@ impl TreeDFSStack  {
 		self.head.pop()
 	}
 	pub fn peek_item(&self) -> Option<Arc<Tree>> {
-		match self.head.last() {
-			Some(arc) => Some(Arc::clone(arc)),
-			_ => None,
-		}
-
+		self.head.last().map(Arc::clone)
 	}
 	pub fn set_left_visited(&mut self, next_left_state: bool) {
 		if let Some(current_state) = self.state.last() {

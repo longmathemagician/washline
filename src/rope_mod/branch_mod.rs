@@ -11,16 +11,8 @@ pub struct Branch {
 }
 impl Branch {
 	pub fn new(left: Option<Arc<Tree>>, right: Option<Arc<Tree>>) -> Self {
-		let left_weight: usize;
-		let right_weight: usize;
-		match left {
-			Some(ref l) => left_weight = l.get_weight(),
-			_ => left_weight = 0,
-		}
-		match right {
-			Some(ref r) => right_weight = r.get_weight(),
-			_ => right_weight = 0,
-		}
+		let left_weight = if let Some(ref l) = left { l.get_weight() } else { 0 };
+		let right_weight = if let Some(ref r) = right { r.get_weight() } else { 0 };
 		Branch {
 			left_weight,
 			right_weight,
@@ -35,15 +27,9 @@ impl Branch {
 	#[allow(dead_code)]
 	pub fn get_right_weight(&self) -> usize { self.right_weight }
 	pub fn get_left(&self) -> Option<Arc<Tree>> {
-		match &self.left {
-			Some(data) => Some(Arc::clone(data)),
-			None => None,
-		}
+		self.left.as_ref().map(Arc::clone)
 	}
 	pub fn get_right(&self) -> Option<Arc<Tree>> {
-		match &self.right {
-			Some(data) => Some(Arc::clone(data)),
-			None => None,
-		}
+		self.right.as_ref().map(Arc::clone)
 	}
 }
