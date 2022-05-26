@@ -17,13 +17,15 @@ impl Rope {
 	pub fn new() -> Self {
 		Rope { head: None }
 	}
+	fn split_string(string: String) -> (String, String) {
+		let string_len: usize = string.chars().count();
+		let split_index = string_len / 2;
+		let left = string.chars().take(split_index).collect();
+		let right = string.chars().take(string_len).skip(split_index).collect();
+		(left, right)
+	}
 	pub fn add_branch(&mut self, data: String) {
-		let data_len: usize = data.chars().count();
-		let split_index = data_len - data_len / 2;
-
-		let left_data = data[..split_index].to_string();
-		let right_data = data[split_index..].to_string();
-
+		let (left_data, right_data) = Rope::split_string(data);
 		let new_right_branch = Tree::new_branch(Some(Arc::new(Tree::new_leaf(left_data))), Some(Arc::new(Tree::new_leaf(right_data))));
 
 		if let Some(_) = self.head {
@@ -38,7 +40,7 @@ impl Rope {
 		let mut stack: ArcStack<Tree> = self.collect_leaves();
 		while let Some(current_tree) = stack.peek() {
 			if let Tree::Leaf(leaf) = &*current_tree {
-				collected_text = leaf.get_text() + &collected_text;
+				collected_text += &leaf.get_text();
 			}
 			stack.pop();
 		}
@@ -70,8 +72,10 @@ impl Rope {
 					tree_stack.pop();
 				}
 			}
-			else if let Tree::Leaf(_) = *this_tree {
-				collected_leaves.push(Arc::clone(&this_tree));
+			else if let Tree::Leaf(leaf) = &*this_tree {
+				if leaf.get_length() > 0 { // drop empty leaves
+					collected_leaves.push(Arc::clone(&this_tree));
+				}
 				tree_stack.pop();
 			}
 			else {
@@ -79,6 +83,7 @@ impl Rope {
 			}
 		}
 
+		collected_leaves.reverse();
 		collected_leaves
 	}
 	pub fn rebuild(&mut self) {
@@ -87,12 +92,12 @@ impl Rope {
 		while let Some(_) = leaf_stack.peek() {
 			let (last, second_last) = leaf_stack.pop_two();
 
-			let new_left_branch = Tree::new_branch(second_last, last);
+			let new_branch = Tree::new_branch(last, second_last);
 			if let Some(_) = new_head {
-				new_head = Tree::new_branch(new_left_branch, mem::replace(&mut new_head, None));
+				new_head = Tree::new_branch(mem::replace(&mut new_head, None), new_branch);
 			}
 			else {
-				new_head = new_left_branch;
+				new_head = new_branch;
 			}
 		}
 		self.head = mem::replace(&mut new_head, None);

@@ -24,6 +24,9 @@ impl<T> ArcStack<T> {
 		let right = self.head.len().checked_sub(1).map(|i| Arc::clone(&self.head[i]));
 		(left, right)
 	}
+	pub fn reverse(&mut self) {
+		self.head.reverse();
+	}
 }
 
 pub struct TreeDFSStack {head: Vec<Arc<Tree>>, state: Vec<(bool, bool)>}

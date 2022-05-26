@@ -11,7 +11,7 @@ impl Leaf {
 		}
 	}
 
-	pub fn get_weight(&self) -> usize {
+	pub fn get_length(&self) -> usize {
 		self.length
 	}
 

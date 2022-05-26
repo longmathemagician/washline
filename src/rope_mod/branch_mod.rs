@@ -32,6 +32,7 @@ impl Branch {
 		self.left_weight + self.right_weight
 	}
 	pub fn get_left_weight(&self) -> usize { self.left_weight }
+	#[allow(dead_code)]
 	pub fn get_right_weight(&self) -> usize { self.right_weight }
 	pub fn get_left(&self) -> Option<Arc<Tree>> {
 		match &self.left {

@@ -18,7 +18,7 @@ impl Tree {
 	pub fn get_weight(&self) -> usize {
 		match self {
 			Tree::Branch(branch) => branch.get_weight(),
-			Tree::Leaf(leaf) => leaf.get_weight(),
+			Tree::Leaf(leaf) => leaf.get_length(),
 		}
 	}
 }
