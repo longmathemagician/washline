@@ -142,6 +142,7 @@ impl Rope {
 	/// of the document. 
 	pub fn substring(&self, mut i: usize, j: usize) -> Option<String> {
 		const DEBUG: bool = false;
+		const ITERATION_LIMIT: bool = false;
 		// this will accumulate our output
 		let mut output_string = String::new();
 
@@ -165,43 +166,46 @@ impl Rope {
 		if DEBUG { println!("-----{{LOOP START}}-----") }
 		let mut iters: usize = 0;
 		let iter_limit: usize = 10*rope_length;
-		while i <= j && iters < iter_limit {
-		iters+=1;
+		while i <= j && (!ITERATION_LIMIT || (iters < iter_limit)) {
+		if ITERATION_LIMIT { iters+=1; }
+		let offset = *stack_offsets.last().unwrap_or(&0);
 		if let Some(tree) = stack.last() {
 			if let Tree::Branch(branch) = &**tree {
-				// either go left, right, or up
-				if (i-*stack_offsets.last().unwrap_or(&0)) < branch.get_left_weight() { // push into left
+				if (i - offset) < branch.get_left_weight() { // push into left
 					if let Some(nxt_bra) = branch.get_left() {
+						if DEBUG { println!("ENTERING BRANCH: PUSH LEFT") }
 						stack.push(nxt_bra);
 					} else { return None }
 				}
-				else if (i-*stack_offsets.last().unwrap_or(&0)) < branch.get_weight() { // push into right
+				else if (i - offset) < branch.get_weight() { // push into right
 					if let Some(nxt_bra) = branch.get_right() {
-						stack_offsets.push(branch.get_left_weight()+ (*stack_offsets.last().unwrap_or(&0)));
+						if DEBUG { println!("ENTERING BRANCH: PUSH RIGHT") }
+						stack_offsets.push(branch.get_left_weight() + offset);
 						stack.push(nxt_bra);
 					} else { return None }
 				}
 				else {
+					if DEBUG { println!("ENTERING BRANCH: PUSH UP") }
 					stack_offsets.pop();
 					stack.pop();
-					iters+=1;
+					if ITERATION_LIMIT { iters+=1; }
 				}
 			}
 			else if let Tree::Leaf(leaf) = &**tree {
 				let leaf_length = leaf.get_length();
 				if (j+1)-i >= leaf_length {
-					// add all of this leaf to the output and go up for more
-					let tmp: String = leaf.get_text().chars().take(leaf_length).skip(i-*stack_offsets.last().unwrap_or(&0)).collect();
-					let consumed: usize = (leaf_length)-(i-*stack_offsets.last().unwrap_or(&0));
+					if DEBUG { println!("ENTERING LEAF: FULL CONSUME") }
+					let tmp: String = leaf.get_text().chars().take(leaf_length).skip(i-offset).collect();
+					let consumed: usize = (leaf_length)-(i-offset);
 					i += consumed;
 					output_string.push_str(&tmp);
 					stack_offsets.pop();
 					stack.pop();
 				}
 				else {
-					// this leaf contains all of the text needed
-					i -= *stack_offsets.last().unwrap_or(&0);
-					let tmp: String = leaf.get_text().chars().take(j+1-*stack_offsets.last().unwrap_or(&0)).skip(i).collect();
+					if DEBUG { println!("ENTERING LEAF: PARTIAL CONSUME & RETURN") }
+					i -= offset;
+					let tmp: String = leaf.get_text().chars().take(j+1-offset).skip(i).collect();
 					output_string.push_str(&tmp);
 					return Some(output_string);
 				}

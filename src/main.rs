@@ -29,7 +29,7 @@ fn main() -> Result<(), PlatformError> {
 	let mut file_index: usize = 0;
 
 	while file_index < file_length {
-		rope_instance.add_branch(file.chars().take(file_index + 2 * leaf_length).skip(file_index).collect());
+		rope_instance.cat(file.chars().take(file_index + 2 * leaf_length).skip(file_index).collect());
 		file_index += 2*leaf_length;
 	}
 
@@ -37,6 +37,9 @@ fn main() -> Result<(), PlatformError> {
 	let source = rope_instance.get_text();
 	// println!("{}", source);
 
+	let substr = rope_instance.substring(0,rope_instance.get_length()-1);
+	println!("{}", substr.unwrap_or_default());
+
 	AppLauncher::with_window(WindowDesc::new(text_widget(source))).launch(())?;
-    Ok(())
+	Ok(())
 }
