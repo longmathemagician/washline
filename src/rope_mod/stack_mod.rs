@@ -1,4 +1,4 @@
-use super::tree_mod::*;
+use super::tree_mod::Tree;
 use std::sync::Arc;
 
 pub struct ArcStack<T> { head: Vec<Arc<T>> }
@@ -17,8 +17,14 @@ impl<T> ArcStack<T> {
 	}
 	#[allow(dead_code)]
 	pub fn peek_two(&mut self) -> (Option<Arc<T>>, Option<Arc<T>>) {
-		let left = self.head.len().checked_sub(2).map(|i| Arc::clone(&self.head[i]));
-		let right = self.head.len().checked_sub(1).map(|i| Arc::clone(&self.head[i]));
+		let left = self.head.len()
+			.checked_sub(2)
+			.map(|i| Arc::clone(&self.head[i]),
+		);
+		let right = self.head.len()
+			.checked_sub(1)
+			.map(|i| Arc::clone(&self.head[i])
+		);
 		(left, right)
 	}
 	pub fn reverse(&mut self) {

@@ -11,8 +11,8 @@ pub struct Branch {
 }
 impl Branch {
 	pub fn new(left: Option<Arc<Tree>>, right: Option<Arc<Tree>>) -> Self {
-		let left_weight = if let Some(ref l) = left { l.get_weight() } else { 0 };
-		let right_weight = if let Some(ref r) = right { r.get_weight() } else { 0 };
+		let left_weight = if let Some(ref l) = left {l.get_weight()} else {0};
+		let right_weight = if let Some(ref r) = right {r.get_weight()} else {0};
 		Branch {
 			left_weight,
 			right_weight,

@@ -14,24 +14,42 @@ pub struct Rope {
 	head: Option<Arc<Tree>>,
 }
 impl Rope {
+	/// Returns a new, empty rope instance
 	pub fn new() -> Self {
 		Rope { head: None }
 	}
-	pub fn cat(&mut self, data: String) {
+
+	/// Adds the passed string to the end of the rope
+	pub fn add_string(&mut self, data: String) {
 		let string_len: usize = data.chars().count();
 		let split_index = string_len / 2;
-		let left_data = data.chars().take(split_index).collect();
-		let right_data = data.chars().take(string_len).skip(split_index).collect();
+
+		let left_data = data.chars()
+			.take(split_index)
+			.collect();
+
+		let right_data = data.chars()
+			.take(string_len)
+			.skip(split_index)
+			.collect();
 		
-		let new_right_branch = Tree::new_branch(Some(Arc::new(Tree::new_leaf(left_data))), Some(Arc::new(Tree::new_leaf(right_data))));
+		let new_right_branch = Tree::new_branch(Some(
+			Arc::new(Tree::new_leaf(left_data))), 
+			Some(Arc::new(Tree::new_leaf(right_data)))
+		);
 
 		if self.head.is_some() {
-			self.head = Tree::new_branch(mem::replace(&mut self.head, None), new_right_branch);
+			self.head = Tree::new_branch(
+				mem::replace(&mut self.head, None), 
+				new_right_branch,
+			);
 		}
 		else {
 			self.head = new_right_branch;
 		}
 	}
+
+	// Returns a string containing the contents of the entire rope instance
 	pub fn get_text(&self) -> String {
 		let mut collected_text: String = String::new();
 		let mut stack: ArcStack<Tree> = self.collect_leaves();
@@ -43,12 +61,17 @@ impl Rope {
 		}
 		collected_text
 	}
+
+	/// Returns the number of UTF-8 graphemes in the rope instance
 	pub fn get_length(&self) -> usize {
 		match &self.head {
 			Some(tree) => tree.get_weight(),
 			_ => 0,
 		}
 	}
+
+	/// Collectes leaves from the rope instance and returns an ordered stack of 
+	/// Arcs to the leaves for processing by some other function.
 	fn collect_leaves(&self) -> ArcStack<Tree> {
 		let mut collected_leaves: ArcStack<Tree> = ArcStack::new();
 		let mut tree_stack: TreeDFSStack = TreeDFSStack::new();
@@ -89,6 +112,8 @@ impl Rope {
 		collected_leaves.reverse();
 		collected_leaves
 	}
+
+	/// Rebuilds the rope tree, removing empty leaves
 	pub fn rebuild(&mut self) {
 		let mut leaf_stack: ArcStack<Tree> = self.collect_leaves();
 		let mut new_head: Option<Arc<Tree>> = None;
@@ -105,6 +130,8 @@ impl Rope {
 		}
 		self.head = new_head.take();
 	}
+
+	/// Returns the character at the specified index of the rope instance
 	pub fn char_at(&self, source_index: usize) -> Option<char> {
 		let mut tree_stack: TreeDFSStack = TreeDFSStack::new();
 		if let Some(tree) = &self.head {
@@ -149,8 +176,11 @@ impl Rope {
 		// if an invalid range was requested, abort mission
 		if i>j { return None }
 
-		let mut stack: Vec<Arc<Tree>> = Vec::new(); // stack of tree elements
-		let mut stack_offsets: Vec<usize> = Vec::new(); // stack to record position offsets
+		// stack of tree elements
+		let mut stack: Vec<Arc<Tree>> = Vec::new();
+
+		// stack to record position offsets
+		let mut stack_offsets: Vec<usize> = Vec::new();
 		let rope_length: usize;
 		match &self.head {
 			Some(tree) => {
@@ -161,7 +191,8 @@ impl Rope {
 			_ => return None, // if this rope is None, it has no substrings
 		}
 
-		if (j+1)>rope_length { return None } // return None if the range is invalid
+		// return None if the range is invalid
+		if (j+1)>rope_length { return None }
 
 		if DEBUG { println!("-----{{LOOP START}}-----") }
 		let mut iters: usize = 0;
@@ -194,8 +225,11 @@ impl Rope {
 			else if let Tree::Leaf(leaf) = &**tree {
 				let leaf_length = leaf.get_length();
 				if (j+1)-i >= leaf_length {
-					if DEBUG { println!("ENTERING LEAF: FULL CONSUME") }
-					let tmp: String = leaf.get_text().chars().take(leaf_length).skip(i-offset).collect();
+					if DEBUG { println!("ENTERING LEAF") }
+					let tmp: String = leaf.get_text().chars()
+						.take(leaf_length)
+						.skip(i-offset)
+						.collect();
 					let consumed: usize = (leaf_length)-(i-offset);
 					i += consumed;
 					output_string.push_str(&tmp);
@@ -203,9 +237,12 @@ impl Rope {
 					stack.pop();
 				}
 				else {
-					if DEBUG { println!("ENTERING LEAF: PARTIAL CONSUME & RETURN") }
+					if DEBUG { println!("ENTERING FINAL LEAF") }
 					i -= offset;
-					let tmp: String = leaf.get_text().chars().take(j+1-offset).skip(i).collect();
+					let tmp: String = leaf.get_text().chars()
+						.take(j+1-offset)
+						.skip(i)
+						.collect();
 					output_string.push_str(&tmp);
 					return Some(output_string);
 				}
