@@ -1,7 +1,7 @@
 use std::{env, fs};
 
-use druid::{AppLauncher, WindowDesc, Widget, PlatformError};
 use druid::widget::Label;
+use druid::{PlatformError, Widget};
 
 // Import the rope module
 mod rope_mod;
@@ -36,9 +36,9 @@ fn main() -> Result<(), PlatformError> {
 			file.chars()
 				.take(file_index + 2 * leaf_length)
 				.skip(file_index)
-				.collect()
-			);
-		file_index += 2*leaf_length;
+				.collect(),
+		);
+		file_index += 2 * leaf_length;
 	}
 
 	// Rebuild the rope
@@ -50,10 +50,10 @@ fn main() -> Result<(), PlatformError> {
 	println!("{}", source);
 
 	// Collect a subset of the text in the rope and print it to the console
-	let substr = rope_instance.substring(0,rope_instance.get_length()-1);
+	let substr = rope_instance.substring(0, rope_instance.get_length() - 1);
 	println!("{}", substr.unwrap_or_default());
 
 	// Open a new window, displaying the data stored inside the rope instance
-	AppLauncher::with_window(WindowDesc::new(text_widget(source))).launch(())?;
+	// AppLauncher::with_window(WindowDesc::new(text_widget(source))).launch(())?;
 	Ok(())
 }

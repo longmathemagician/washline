@@ -1,11 +1,23 @@
 use super::tree_mod::Tree;
 use std::sync::Arc;
 
-pub struct ArcStack<T> { head: Vec<Arc<T>> }
+/// The stack module holds a number of different stack objects used for parsing a rope.
+
+pub struct ArcStack<T> {
+	head: Vec<Arc<T>>,
+}
+
+/// The arcstack
 impl<T> ArcStack<T> {
-	pub fn new() -> Self { ArcStack {head: Vec::new()} }
-	pub fn push(&mut self, next: Arc<T>) { self.head.push(next); }
-	pub fn pop(&mut self) -> Option<Arc<T>>{ self.head.pop() }
+	pub fn new() -> Self {
+		ArcStack { head: Vec::new() }
+	}
+	pub fn push(&mut self, next: Arc<T>) {
+		self.head.push(next);
+	}
+	pub fn pop(&mut self) -> Option<Arc<T>> {
+		self.head.pop()
+	}
 	pub fn pop_two(&mut self) -> (Option<Arc<T>>, Option<Arc<T>>) {
 		let last = self.head.pop();
 		let second_last = self.head.pop();
@@ -17,14 +29,16 @@ impl<T> ArcStack<T> {
 	}
 	#[allow(dead_code)]
 	pub fn peek_two(&mut self) -> (Option<Arc<T>>, Option<Arc<T>>) {
-		let left = self.head.len()
+		let left = self
+			.head
+			.len()
 			.checked_sub(2)
-			.map(|i| Arc::clone(&self.head[i]),
-		);
-		let right = self.head.len()
+			.map(|i| Arc::clone(&self.head[i]));
+		let right = self
+			.head
+			.len()
 			.checked_sub(1)
-			.map(|i| Arc::clone(&self.head[i])
-		);
+			.map(|i| Arc::clone(&self.head[i]));
 		(left, right)
 	}
 	pub fn reverse(&mut self) {
@@ -32,14 +46,22 @@ impl<T> ArcStack<T> {
 	}
 }
 
-pub struct TreeDFSStack {head: Vec<Arc<Tree>>, state: Vec<(bool, bool)>}
-impl TreeDFSStack  {
-	pub fn new() -> Self {TreeDFSStack {head: Vec::new(), state: Vec::new()}}
+pub struct TreeDFSStack {
+	head: Vec<Arc<Tree>>,
+	state: Vec<(bool, bool)>,
+}
+impl TreeDFSStack {
+	pub fn new() -> Self {
+		TreeDFSStack {
+			head: Vec::new(),
+			state: Vec::new(),
+		}
+	}
 	pub fn push(&mut self, next: Arc<Tree>, state: (bool, bool)) {
 		self.head.push(next);
 		self.state.push(state);
 	}
-	pub fn pop(&mut self) -> Option<Arc<Tree>>{
+	pub fn pop(&mut self) -> Option<Arc<Tree>> {
 		self.state.pop();
 		self.head.pop()
 	}

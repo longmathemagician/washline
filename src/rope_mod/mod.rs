@@ -1,10 +1,10 @@
 use std::mem;
 use std::sync::Arc;
 
+mod branch_mod;
+mod leaf_mod;
 mod stack_mod;
 mod tree_mod;
-mod leaf_mod;
-mod branch_mod;
 
 use stack_mod::*;
 use tree_mod::*;
@@ -24,27 +24,18 @@ impl Rope {
 		let string_len: usize = data.chars().count();
 		let split_index = string_len / 2;
 
-		let left_data = data.chars()
-			.take(split_index)
-			.collect();
+		let left_data = data.chars().take(split_index).collect();
 
-		let right_data = data.chars()
-			.take(string_len)
-			.skip(split_index)
-			.collect();
-		
-		let new_right_branch = Tree::new_branch(Some(
-			Arc::new(Tree::new_leaf(left_data))), 
-			Some(Arc::new(Tree::new_leaf(right_data)))
+		let right_data = data.chars().take(string_len).skip(split_index).collect();
+
+		let new_right_branch = Tree::new_branch(
+			Some(Arc::new(Tree::new_leaf(left_data))),
+			Some(Arc::new(Tree::new_leaf(right_data))),
 		);
 
 		if self.head.is_some() {
-			self.head = Tree::new_branch(
-				mem::replace(&mut self.head, None), 
-				new_right_branch,
-			);
-		}
-		else {
+			self.head = Tree::new_branch(mem::replace(&mut self.head, None), new_right_branch);
+		} else {
 			self.head = new_right_branch;
 		}
 	}
@@ -70,7 +61,7 @@ impl Rope {
 		}
 	}
 
-	/// Collectes leaves from the rope instance and returns an ordered stack of 
+	/// Collectes leaves from the rope instance and returns an ordered stack of
 	/// Arcs to the leaves for processing by some other function.
 	fn collect_leaves(&self) -> ArcStack<Tree> {
 		let mut collected_leaves: ArcStack<Tree> = ArcStack::new();
@@ -87,24 +78,21 @@ impl Rope {
 					if let Some(left_sub_branch) = branch.get_left() {
 						tree_stack.push(left_sub_branch, (false, false));
 					}
-				}
-				else if !tree_stack.get_right_visited() {
+				} else if !tree_stack.get_right_visited() {
 					tree_stack.set_right_visited(true);
 					if let Some(right_sub_branch) = branch.get_right() {
 						tree_stack.push(right_sub_branch, (false, false));
 					}
-				}
-				else {
+				} else {
 					tree_stack.pop();
 				}
-			}
-			else if let Tree::Leaf(leaf) = &*this_tree {
-				if leaf.get_length() > 0 { // drop empty leaves
+			} else if let Tree::Leaf(leaf) = &*this_tree {
+				if leaf.get_length() > 0 {
+					// drop empty leaves
 					collected_leaves.push(Arc::clone(&this_tree));
 				}
 				tree_stack.pop();
-			}
-			else {
+			} else {
 				tree_stack.pop();
 			}
 		}
@@ -123,8 +111,7 @@ impl Rope {
 			let new_branch = Tree::new_branch(last, second_last);
 			if new_head.is_some() {
 				new_head = Tree::new_branch(new_head.take(), new_branch);
-			}
-			else {
+			} else {
 				new_head = new_branch;
 			}
 		}
@@ -143,9 +130,13 @@ impl Rope {
 
 		if let Some(head) = &self.head {
 			doc_length = head.get_weight() - 1;
-			if source_index > doc_length { return None }
+			if source_index > doc_length {
+				return None;
+			}
 			char_index = source_index;
-		} else { return None }
+		} else {
+			return None;
+		}
 
 		while let Some(current_tree) = tree_stack.peek_item() {
 			if let Tree::Branch(branch) = &*current_tree {
@@ -153,20 +144,22 @@ impl Rope {
 					if let Some(right_sub_branch) = branch.get_right() {
 						char_index -= branch.get_left_weight();
 						tree_stack.push(right_sub_branch, (false, false));
-					} else { return None }
+					} else {
+						return None;
+					}
+				} else if let Some(left_sub_branch) = branch.get_left() {
+					tree_stack.push(left_sub_branch, (false, false));
+				} else {
+					return None;
 				}
-				else if let Some(left_sub_branch) = branch.get_left() {
-						tree_stack.push(left_sub_branch, (false, false));
-				} else { return None }
-			}
-			else if let Tree::Leaf(leaf) = &*current_tree {
+			} else if let Tree::Leaf(leaf) = &*current_tree {
 				return Some(leaf.get_text().chars().nth(char_index).unwrap());
 			}
 		}
 		None
 	}
 	/// Returns an optioned String representing the desired substring
-	/// of the document. 
+	/// of the document.
 	pub fn substring(&self, mut i: usize, j: usize) -> Option<String> {
 		const DEBUG: bool = false;
 		const ITERATION_LIMIT: bool = false;
@@ -174,7 +167,9 @@ impl Rope {
 		let mut output_string = String::new();
 
 		// if an invalid range was requested, abort mission
-		if i>j { return None }
+		if i > j {
+			return None;
+		}
 
 		// stack of tree elements
 		let mut stack: Vec<Arc<Tree>> = Vec::new();
@@ -187,72 +182,102 @@ impl Rope {
 				stack.push(Arc::clone(tree)); // push the root node to the stack
 				stack_offsets.push(0);
 				rope_length = tree.get_weight(); // and record the length
-			},
+			}
 			_ => return None, // if this rope is None, it has no substrings
 		}
 
 		// return None if the range is invalid
-		if (j+1)>rope_length { return None }
+		if (j + 1) > rope_length {
+			return None;
+		}
 
-		if DEBUG { println!("-----{{LOOP START}}-----") }
+		if DEBUG {
+			println!("-----{{LOOP START}}-----")
+		}
 		let mut iters: usize = 0;
-		let iter_limit: usize = 10*rope_length;
+		let iter_limit: usize = 10 * rope_length;
 		while i <= j && (!ITERATION_LIMIT || (iters < iter_limit)) {
-		if ITERATION_LIMIT { iters+=1; }
-		let offset = *stack_offsets.last().unwrap_or(&0);
-		if let Some(tree) = stack.last() {
-			if let Tree::Branch(branch) = &**tree {
-				if (i - offset) < branch.get_left_weight() { // push into left
-					if let Some(nxt_bra) = branch.get_left() {
-						if DEBUG { println!("ENTERING BRANCH: PUSH LEFT") }
-						stack.push(nxt_bra);
-					} else { return None }
-				}
-				else if (i - offset) < branch.get_weight() { // push into right
-					if let Some(nxt_bra) = branch.get_right() {
-						if DEBUG { println!("ENTERING BRANCH: PUSH RIGHT") }
-						stack_offsets.push(branch.get_left_weight() + offset);
-						stack.push(nxt_bra);
-					} else { return None }
-				}
-				else {
-					if DEBUG { println!("ENTERING BRANCH: PUSH UP") }
-					stack_offsets.pop();
-					stack.pop();
-					if ITERATION_LIMIT { iters+=1; }
-				}
+			if ITERATION_LIMIT {
+				iters += 1;
 			}
-			else if let Tree::Leaf(leaf) = &**tree {
-				let leaf_length = leaf.get_length();
-				if (j+1)-i >= leaf_length {
-					if DEBUG { println!("ENTERING LEAF") }
-					let tmp: String = leaf.get_text().chars()
-						.take(leaf_length)
-						.skip(i-offset)
-						.collect();
-					let consumed: usize = (leaf_length)-(i-offset);
-					i += consumed;
-					output_string.push_str(&tmp);
-					stack_offsets.pop();
-					stack.pop();
+			let offset = *stack_offsets.last().unwrap_or(&0);
+			if let Some(tree) = stack.last() {
+				if let Tree::Branch(branch) = &**tree {
+					if (i - offset) < branch.get_left_weight() {
+						// push into left
+						if let Some(nxt_bra) = branch.get_left() {
+							if DEBUG {
+								println!("ENTERING BRANCH: PUSH LEFT")
+							}
+							stack.push(nxt_bra);
+						} else {
+							return None;
+						}
+					} else if (i - offset) < branch.get_weight() {
+						// push into right
+						if let Some(nxt_bra) = branch.get_right() {
+							if DEBUG {
+								println!("ENTERING BRANCH: PUSH RIGHT")
+							}
+							stack_offsets.push(branch.get_left_weight() + offset);
+							stack.push(nxt_bra);
+						} else {
+							return None;
+						}
+					} else {
+						if DEBUG {
+							println!("ENTERING BRANCH: PUSH UP")
+						}
+						stack_offsets.pop();
+						stack.pop();
+						if ITERATION_LIMIT {
+							iters += 1;
+						}
+					}
+				} else if let Tree::Leaf(leaf) = &**tree {
+					let leaf_length = leaf.get_length();
+					if (j + 1) - i >= leaf_length {
+						if DEBUG {
+							println!("ENTERING LEAF")
+						}
+						let tmp: String = leaf
+							.get_text()
+							.chars()
+							.take(leaf_length)
+							.skip(i - offset)
+							.collect();
+						let consumed: usize = (leaf_length) - (i - offset);
+						i += consumed;
+						output_string.push_str(&tmp);
+						stack_offsets.pop();
+						stack.pop();
+					} else {
+						if DEBUG {
+							println!("ENTERING FINAL LEAF")
+						}
+						i -= offset;
+						let tmp: String = leaf
+							.get_text()
+							.chars()
+							.take(j + 1 - offset)
+							.skip(i)
+							.collect();
+						output_string.push_str(&tmp);
+						return Some(output_string);
+					}
 				}
-				else {
-					if DEBUG { println!("ENTERING FINAL LEAF") }
-					i -= offset;
-					let tmp: String = leaf.get_text().chars()
-						.take(j+1-offset)
-						.skip(i)
-						.collect();
-					output_string.push_str(&tmp);
-					return Some(output_string);
+			} else {
+				if DEBUG {
+					println!("EXITING LOOP, ITERATION LIMIT EXCEEDED")
 				}
+				break;
 			}
-		} else {
-		if DEBUG { println!("EXITING LOOP, ITERATION LIMIT EXCEEDED") }
-		break }} // exit the loop if we empty the stack 
+		} // exit the loop if we empty the stack
 
 		// should never exit from here unless the tree is broken, so return None
-		if DEBUG { println!("EXITING SUBSTRING FUNCTION WITH PARTIAL DATA") }
+		if DEBUG {
+			println!("EXITING SUBSTRING FUNCTION WITH PARTIAL DATA")
+		}
 		Some(output_string)
 	}
 }
